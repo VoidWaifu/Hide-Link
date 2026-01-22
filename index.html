@@ -944,7 +944,6 @@
             function updateToggleHighlight() {
                 const group = document.querySelector('.toggle-group');
                 if (!group) return;
-                const options = Array.from(group.querySelectorAll('.toggle-option'));
                 const checked = group.querySelector('input:checked');
                 if (!checked) return;
                 const label = checked.closest('.toggle-option');
@@ -952,20 +951,23 @@
 
                 const groupRect = group.getBoundingClientRect();
                 const labelRect = label.getBoundingClientRect();
-                const left = labelRect.left - groupRect.left;
-                const width = labelRect.width;
+                const leftPct = ((labelRect.left - groupRect.left) / groupRect.width) * 100;
+                const widthPct = (labelRect.width / groupRect.width) * 100;
 
-                group.style.setProperty('--toggle-before-left', `${left}px`);
-                group.style.setProperty('--toggle-before-width', `${width}px`);
-            }
-
+                group.style.setProperty('--toggle-before-left', `${leftPct}%`);
+                group.style.setProperty('--toggle-before-width', `${widthPct}%`);
+             }
+ 
             const group = document.querySelector('.toggle-group');
             if (group) {
                 group.classList.add('no-transition');
                 updateToggleHighlight();
                 requestAnimationFrame(() => {
-                    group.classList.remove('no-transition');
+                    requestAnimationFrame(() => {
+                        group.classList.remove('no-transition');
+                    });
                 });
+                setTimeout(updateToggleHighlight, 120);
 
                 group.addEventListener('change', updateToggleHighlight);
                 window.addEventListener('resize', updateToggleHighlight);
