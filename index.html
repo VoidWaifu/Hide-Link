@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hide-Link - Спрячь свою ссылку</title>
+    <title>Hide Link - Спрячь свою ссылку</title>
     <style>
         * {
             margin: 0;
@@ -121,7 +121,6 @@
             padding: 8px 15px;
             font-size: 14px;
             width: auto;
-            margin-left: 10px;
         }
 
         .btn-delete {
@@ -131,22 +130,48 @@
             width: auto;
         }
 
+        .btn-edit {
+            background: var(--accent);
+            color: var(--bg-primary);
+            padding: 8px 15px;
+            font-size: 14px;
+            width: auto;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-edit:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
         .result {
             margin-top: 25px;
             padding: 15px;
             background: var(--bg-accent);
             border-radius: 8px;
             display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
-
-        .result.show {
+        .result.visible {
             display: block;
+        }
+        .result.show {
+            opacity: 1;
             animation: fadeIn 0.3s;
+        }
+        .result.hide {
+            opacity: 0;
+            transition: opacity 0.3s;
         }
 
         .short-url {
             word-break: break-all;
-            font-family: monospace;
+            font-family: 'Arial', 'Segoe UI', sans-serif;
             font-size: 14px;
             color: var(--success);
             margin-bottom: 10px;
@@ -168,6 +193,7 @@
         .links-list {
             display: grid;
             gap: 15px;
+            max-width: 100%;
         }
 
         .link-item {
@@ -179,41 +205,49 @@
             justify-content: space-between;
             align-items: center;
             transition: transform 0.2s;
-        }
-
-        .link-item:hover {
-            transform: translateX(5px);
-            border-color: var(--accent);
+            max-width: 100%;
+            overflow: hidden;
         }
 
         .link-info {
             flex: 1;
             min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
         }
 
         .link-name {
             font-weight: 600;
             color: var(--accent);
             margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            display: block;
         }
 
-        .link-original {
+        .link-original,
+        .link-short {
             font-size: 14px;
             color: var(--text-secondary);
             word-break: break-all;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 420px;
+            display: block;
         }
 
         .link-short {
-            font-size: 12px;
             color: var(--success);
-            font-family: monospace;
+            font-family: 'Arial', 'Segoe UI', sans-serif;
             margin-top: 5px;
         }
 
         .link-actions {
             display: flex;
             gap: 10px;
-            margin-left: 15px;
         }
 
         .empty-state {
@@ -256,30 +290,245 @@
             background: var(--error);
         }
 
+        .mode-toggle {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .mode-toggle label {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .toggle-group {
+            display: inline-flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            width: 100%;
+            max-width: 420px;
+            padding: 6px;
+            border-radius: 999px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .toggle-group::before {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 0;
+            width: 50%;
+            height: calc(100% - 8px);
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35);
+            z-index: 0;
+            transition: left 0.4s cubic-bezier(.4,1,.3,1), width 0.4s cubic-bezier(.4,1,.3,1);
+            pointer-events: none;
+        }
+
+        .toggle-group.no-transition::before {
+            transition: none !important;
+        }
+
+        .toggle-option {
+            position: relative;
+            flex: 1;
+            min-width: 150px;
+            padding: 0;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            background: transparent;
+            border: none;
+            margin: 0;
+            z-index: 1;
+        }
+
+        .toggle-option:hover span {
+            transform: translateY(-1px);
+        }
+
+        .toggle-option input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .toggle-option span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            background: transparent;
+            color: var(--text-primary);
+            transition: all 0.5s ease, color 0.5s ease;
+            position: relative;
+            z-index: 2;
+            background: transparent !important;
+            font-family: 'Arial', 'Segoe UI', sans-serif;
+        }
+
+        .toggle-option input:checked + span {
+            background: transparent !important;
+            color: var(--bg-primary);
+        }
+
         @media (max-width: 768px) {
             .container {
-                padding: 10px;
+                padding: 4px;
+                max-width: 100vw;
             }
-            
+            header {
+                padding: 10px 0;
+                margin-bottom: 24px;
+            }
             h1 {
-                font-size: 2rem;
+                font-size: 1.5rem;
+                margin-bottom: 6px;
             }
-            
+            .subtitle {
+                font-size: 1rem;
+            }
+            .main-card {
+                padding: 16px;
+                margin-bottom: 18px;
+                border-radius: 10px;
+            }
+            .input-group label {
+                font-size: 0.95rem;
+                margin-bottom: 5px;
+            }
+            input {
+                font-size: 15px;
+                padding: 10px 10px;
+                border-radius: 6px;
+            }
+            .btn {
+                font-size: 15px;
+                padding: 10px 15px;
+                border-radius: 6px;
+                margin-top: 8px;
+            }
+            .btn-copy, .btn-delete, .btn-edit {
+                font-size: 13px;
+                padding: 7px 10px;
+                border-radius: 6px;
+            }
+            .result {
+                padding: 10px;
+                font-size: 15px;
+            }
+            .short-url {
+                font-size: 13px;
+            }
+            .links-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+                margin-bottom: 12px;
+                padding-bottom: 6px;
+            }
+            .links-list {
+                gap: 10px;
+            }
             .link-item {
                 flex-direction: column;
                 align-items: flex-start;
+                padding: 10px;
+                border-radius: 8px;
             }
-            
+            .link-info {
+                width: 100%;
+                max-width: 100vw;
+            }
+            .link-name, .link-original, .link-short {
+                font-size: 13px;
+                max-width: 95vw;
+                word-break: break-all;
+                white-space: normal;
+            }
             .link-actions {
-                margin-left: 0;
-                margin-top: 15px;
+                flex-direction: row;
+                gap: 6px;
+                margin-top: 10px;
                 width: 100%;
             }
-            
-            .btn-copy, .btn-delete {
-                width: 100%;
-                margin-left: 0;
-                margin-top: 5px;
+            .btn-copy, .btn-delete, .btn-edit {
+                width: auto;
+                margin: 0;
+            }
+            .empty-state {
+                padding: 24px 8px;
+                font-size: 15px;
+            }
+            .empty-state svg {
+                width: 48px;
+                height: 48px;
+                margin-bottom: 12px;
+            }
+            .mode-toggle {
+                gap: 6px;
+                margin-bottom: 12px;
+            }
+            .toggle-group {
+                max-width: 98vw;
+                padding: 4px;
+            }
+            .toggle-option span {
+                font-size: 0.9rem;
+                padding: 6px 8px;
+            }
+            .scanlines {
+                background-size: 100% 2px;
+            }
+            .top-bar {
+                padding-top: 0;
+                padding-right: 0;
+            }
+            .my-site-btn {
+                font-size: 13px;
+                padding: 7px 12px;
+                border-radius: 6px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.1rem;
+            }
+            .main-card {
+                padding: 8px;
+            }
+            .btn {
+                font-size: 13px;
+                padding: 8px 8px;
+            }
+            .btn-copy, .btn-delete, .btn-edit {
+                font-size: 12px;
+                padding: 6px 6px;
+            }
+            .link-name, .link-original, .link-short {
+                font-size: 12px;
+            }
+            .toggle-option span {
+                font-size: 0.85rem;
+                padding: 4px 4px;
+            }
+            .my-site-btn {
+                font-size: 12px;
+                padding: 6px 8px;
             }
         }
 
@@ -299,26 +548,72 @@
             z-index: 9998;
             opacity: 0.1;
         }
+
+        .top-bar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 1px;
+            padding-top: 1px;
+            padding-right: 2px;
+        }
+        .my-site-btn {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: 9px 22px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s, box-shadow 0.3s, transform 0.2s;
+            box-shadow: 0 2px 8px var(--shadow);
+            text-decoration: none;
+            display: inline-block;
+        }
+        .my-site-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px) scale(1.04);
+            box-shadow: 0 5px 15px var(--shadow);
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
     <div class="scanlines"></div>
     <div class="container">
+        <div class="top-bar">
+            <a class="my-site-btn" href="https://voidwaifu.github.io" target="_blank" rel="noopener">Мой сайт</a>
+        </div>
         <header>
-            <h1>Hide-Link</h1>
-            <p class="subtitle">Спрячьте свою ссылку</p>
+            <h1>Hide Link</h1>
+            <p class="subtitle">Спрячь свою ссылку</p>
         </header>
         
         <main>
             <div class="main-card">
                 <div class="input-group">
                     <label for="urlInput">Введите URL для сокрытия:</label>
-                    <input type="url" id="urlInput" placeholder="https://example.com/очень-длинный-путь-к-странице" required>
+                    <input type="url" id="urlInput" placeholder="https://voidwaifu.github.io/Hide-Link/" required>
                 </div>
                 
                 <div class="input-group">
                     <label for="nameInput">Название ссылки (для вашего удобства):</label>
                     <input type="text" id="nameInput" placeholder="Моя важная ссылка" maxlength="50">
+                </div>
+                
+                <div class="mode-toggle">
+                    <label>Режим ссылки:</label>
+                    <div class="toggle-group">
+                        <label class="toggle-option">
+                            <input type="radio" name="mode" value="normal" checked>
+                            <span>Обычный режим</span>
+                        </label>
+                        <label class="toggle-option">
+                            <input type="radio" name="mode" value="ooo">
+                            <span>Режим 0oO</span>
+                        </label>
+                    </div>
                 </div>
                 
                 <button class="btn" id="createBtn">Создать скрытую ссылку</button>
@@ -352,7 +647,16 @@
     
     <script>
         const BASE_URL = 'https://voidwaifu.github.io';
-        
+        const BASE64URL_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+        const TRIT_MAP = ['0', 'o', 'O'];
+
+        function saveSelectedMode(mode) {
+            localStorage.setItem('hideLinksMode', mode);
+        }
+        function loadSelectedMode() {
+            return localStorage.getItem('hideLinksMode') || 'normal';
+        }
+
         function encodeUrlToShort(url) {
             try {
                 const base64 = btoa(unescape(encodeURIComponent(url)));
@@ -372,6 +676,26 @@
             } catch (e) {
                 return null;
             }
+        }
+        
+        function encodeUrlToOoo(url) {
+            const base64url = encodeUrlToShort(url);
+            let out = '';
+            for (const ch of base64url) {
+                let idx = BASE64URL_ALPHABET.indexOf(ch);
+                if (idx < 0) return '';
+                for (let i = 0; i < 4; i++) {
+                    const trit = idx % 3;
+                    out += TRIT_MAP[trit];
+                    idx = Math.floor(idx / 3);
+                }
+            }
+            return out;
+        }
+
+        function getSelectedMode() {
+            const selected = document.querySelector('input[name="mode"]:checked');
+            return selected ? selected.value : 'normal';
         }
         
         function showNotification(message, isError = false) {
@@ -417,7 +741,9 @@
                 return;
             }
             
-            const shortCode = encodeUrlToShort(fullUrl);
+            const shortCode = getSelectedMode() === 'ooo'
+                ? encodeUrlToOoo(fullUrl)
+                : encodeUrlToShort(fullUrl);
             const shortUrl = `${BASE_URL}/${shortCode}`;
             
             const links = loadFromLocalStorage();
@@ -433,13 +759,21 @@
             saveToLocalStorage(links);
             
             document.getElementById('shortUrl').textContent = shortUrl;
-            document.getElementById('result').classList.add('show');
-            
-            navigator.clipboard.writeText(shortUrl).then(() => {
-                showNotification('Ссылка создана и скопирована!');
-            }).catch(() => {
-                showNotification('Ссылка создана!');
+            const resultBlock = document.getElementById('result');
+            resultBlock.classList.add('visible');
+            requestAnimationFrame(() => {
+                resultBlock.classList.add('show');
             });
+
+            clearTimeout(window.hideResultTimeout);
+            window.hideResultTimeout = setTimeout(() => {
+                resultBlock.classList.remove('show');
+                setTimeout(() => {
+                    resultBlock.classList.remove('visible');
+                }, 300);
+            }, 10000);
+
+            showNotification('Ссылка создана!');
             
             urlInput.value = '';
             nameInput.value = '';
@@ -463,10 +797,18 @@
             }
         }
         
+        function truncateEnd(str, maxLength = 48) {
+            if (str.length <= maxLength) return str;
+            return str.slice(0, maxLength - 3) + '...';
+        }
+
+        let editingLinkId = null;
+        let editingNameValue = '';
+
         function renderLinks() {
             const linksList = document.getElementById('linksList');
             const links = loadFromLocalStorage();
-            
+
             if (links.length === 0) {
                 linksList.innerHTML = `
                     <div class="empty-state">
@@ -481,41 +823,107 @@
             
             let html = '';
             links.forEach(link => {
-                html += `
-                    <div class="link-item">
-                        <div class="link-info">
-                            <div class="link-name">${link.name}</div>
-                            <div class="link-original">${link.originalUrl}</div>
-                            <div class="link-short">${link.shortUrl}</div>
+                if (editingLinkId === link.id) {
+                    html += `
+                        <div class="link-item">
+                            <div class="link-info">
+                                <input type="text" id="editNameInput" value="${editingNameValue || link.name}" maxlength="50" style="width:90%;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);font-size:15px;">
+                                <div class="link-original" title="${link.originalUrl}">${truncateEnd(link.originalUrl, 60)}</div>
+                                <div class="link-short" title="${link.shortUrl}">${truncateEnd(link.shortUrl, 48)}</div>
+                            </div>
+                            <div class="link-actions">
+                                <button class="btn btn-copy" onclick="saveEditLink('${link.id}')">Сохранить</button>
+                                <button class="btn btn-delete" onclick="cancelEditLink()">Отмена</button>
+                            </div>
                         </div>
-                        <div class="link-actions">
-                            <button class="btn btn-copy" onclick="copyToClipboard('${link.shortUrl}')">Копировать</button>
-                            <button class="btn btn-delete" onclick="deleteLink('${link.id}')">Удалить</button>
+                    `;
+                } else {
+                    html += `
+                        <div class="link-item">
+                            <div class="link-info">
+                                <div class="link-name" title="${link.name}">${truncateEnd(link.name, 48)}</div>
+                                <div class="link-original" title="${link.originalUrl}">${truncateEnd(link.originalUrl, 60)}</div>
+                                <div class="link-short" title="${link.shortUrl}">${truncateEnd(link.shortUrl, 48)}</div>
+                            </div>
+                            <div class="link-actions">
+                                <button class="btn btn-copy" onclick="copyToClipboard('${link.shortUrl}')">Копировать</button>
+                                <button class="btn btn-edit" onclick="editLink('${link.id}')">Редактировать</button>
+                                <button class="btn btn-delete" onclick="deleteLink('${link.id}')">Удалить</button>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                }
             });
             
             linksList.innerHTML = html;
+
+            if (editingLinkId) {
+                const input = document.getElementById('editNameInput');
+                if (input) {
+                    input.focus();
+                    input.selectionStart = input.value.length;
+                    input.addEventListener('input', (e) => {
+                        editingNameValue = e.target.value;
+                    });
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') saveEditLink(editingLinkId);
+                        if (e.key === 'Escape') cancelEditLink();
+                    });
+                }
+            }
         }
-        
+
+        function editLink(id) {
+            const links = loadFromLocalStorage();
+            const link = links.find(l => l.id === id);
+            if (!link) return;
+            editingLinkId = id;
+            editingNameValue = link.name;
+            renderLinks();
+        }
+
+        function saveEditLink(id) {
+            const input = document.getElementById('editNameInput');
+            if (!input) return;
+            const newName = input.value.trim();
+            if (!newName) {
+                showNotification('Название не может быть пустым', true);
+                input.focus();
+                return;
+            }
+            let links = loadFromLocalStorage();
+            links = links.map(link => link.id === id ? { ...link, name: newName } : link);
+            saveToLocalStorage(links);
+            editingLinkId = null;
+            editingNameValue = '';
+            renderLinks();
+            showNotification('Название обновлено');
+        }
+
+        function cancelEditLink() {
+            editingLinkId = null;
+            editingNameValue = '';
+            renderLinks();
+        }
+
         function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showNotification('Скопировано!');
-            }).catch(() => {
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                showNotification('Скопировано!');
-            });
+            if (!text) return;
+            navigator.clipboard.writeText(text)
+                .then(() => showNotification('Ссылка скопирована!'))
+                .catch(() => showNotification('Ошибка копирования', true));
         }
-        
+
         document.addEventListener('DOMContentLoaded', () => {
             renderLinks();
-            
+            const savedMode = loadSelectedMode();
+            const modeInputs = document.querySelectorAll('input[name="mode"]');
+            modeInputs.forEach(input => {
+                input.checked = (input.value === savedMode);
+                input.addEventListener('change', () => {
+                    if (input.checked) saveSelectedMode(input.value);
+                });
+            });
+
             document.getElementById('createBtn').addEventListener('click', createHideLink);
             document.getElementById('copyBtn').addEventListener('click', () => {
                 const shortUrl = document.getElementById('shortUrl').textContent;
@@ -532,7 +940,43 @@
             if (presetUrl) {
                 document.getElementById('urlInput').value = decodeURIComponent(presetUrl);
             }
+
+            function updateToggleHighlight() {
+                const group = document.querySelector('.toggle-group');
+                if (!group) return;
+                const options = Array.from(group.querySelectorAll('.toggle-option'));
+                const checked = group.querySelector('input:checked');
+                if (!checked) return;
+                const label = checked.closest('.toggle-option');
+                if (!label) return;
+
+                const groupRect = group.getBoundingClientRect();
+                const labelRect = label.getBoundingClientRect();
+                const left = labelRect.left - groupRect.left;
+                const width = labelRect.width;
+
+                group.style.setProperty('--toggle-before-left', `${left}px`);
+                group.style.setProperty('--toggle-before-width', `${width}px`);
+            }
+
+            const group = document.querySelector('.toggle-group');
+            if (group) {
+                group.classList.add('no-transition');
+                updateToggleHighlight();
+                requestAnimationFrame(() => {
+                    group.classList.remove('no-transition');
+                });
+
+                group.addEventListener('change', updateToggleHighlight);
+                window.addEventListener('resize', updateToggleHighlight);
+            }
         });
     </script>
+    <style>
+        .toggle-group::before {
+            left: var(--toggle-before-left, 0px);
+            width: var(--toggle-before-width, 50%);
+        }
+    </style>
 </body>
 </html>
